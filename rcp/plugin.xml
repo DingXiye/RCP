@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <extension
+         id="application"
+         point="org.eclipse.core.runtime.applications">
+      <application>
+         <run
+               class="rcp.Application">
+         </run>
+      </application>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="rcp.Perspective"
+            fixed="true"
+            id="rcp.perspective"
+            name="RCP Perspective">
+      </perspective>
+      <perspective
+            class="rcp.PerspectiveFactory1"
+            fixed="false"
+            icon="icons/alt_window_16.gif"
+            id="rcp.perspective1"
+            name="MyPerspective">
+      </perspective>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="com.rengu.demo.views.NvaigatorView"
+            icon="icons/alt_window_16.gif"
+            id="com.rengu.demo.views.NvaigatorView"
+            name="Nvaigator"
+            restorable="true">
+      </view>
+      <view
+            class="com.rengu.demo.views.SaerchView"
+            icon="icons/alt_window_16.gif"
+            id="com.rengu.demo.views.SaerchView"
+            name="Saerch"
+            restorable="true">
+      </view>
+      <view
+            class="com.rengu.demo.views.SaerchPatienInforView"
+            icon="icons/alt_window_32.gif"
+            id="com.rengu.demo.views.SaerchPatienInforView"
+            name="病人信息"
+            restorable="true">
+      </view>
+      <view
+            class="com.rengu.demo.views.SaerchPatienExepenInfoView"
+            icon="icons/alt_window_32.gif"
+            id="com.rengu.demo.views.SaerchPatienExepenInfoView"
+            name="费用信息"
+            restorable="true">
+      </view>
+   </extension>
+   <extension
+         id="rcp"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="rcp.application"
+            name="name">
+      </product>
+   </extension>
+
+</plugin>

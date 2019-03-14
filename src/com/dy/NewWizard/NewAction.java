@@ -1,0 +1,188 @@
+package com.dy.NewWizard;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.IWorkbenchHelpContextIds;
+import org.eclipse.ui.internal.LegacyResourceSupport;
+import org.eclipse.ui.internal.PerspectiveTracker;
+import org.eclipse.ui.internal.WorkbenchMessages;
+import org.eclipse.ui.internal.WorkbenchPlugin;
+import org.eclipse.ui.internal.util.Util;
+
+import com.dy.NewWizard.MyNewWizard;
+
+@SuppressWarnings("restriction")
+public class NewAction extends Action {
+	/**
+	 * The wizard dialog width
+	 */
+	private static final int SIZING_WIZARD_WIDTH = 500;
+
+	/**
+	 * The wizard dialog height
+	 */
+	private static final int SIZING_WIZARD_HEIGHT = 500;
+
+	/**
+	 * The id of the category to show or <code>null</code> to show all the
+	 * categories.
+	 */
+	private String categoryId = null;
+
+	/**
+	 * The workbench window; or <code>null</code> if this action has been
+	 * <code>dispose</code>d.
+	 */
+	private IWorkbenchWindow workbenchWindow;
+
+	/**
+	 * Tracks perspective activation, to update this action's enabled state.
+	 */
+	private PerspectiveTracker tracker;
+
+	/**
+	 * Create a new instance of this class.
+	 * 
+	 * @param window
+	 */
+	public NewAction(IWorkbenchWindow window) {
+		if (window == null) {
+			throw new IllegalArgumentException();
+		}
+		this.workbenchWindow = window;
+		tracker = new PerspectiveTracker(window, this);
+		// @issues should be IDE-specific images
+		ISharedImages images = PlatformUI.getWorkbench().getSharedImages();
+		setImageDescriptor(images
+				.getImageDescriptor(ISharedImages.IMG_TOOL_NEW_WIZARD));
+		setText("Select Wizard");
+		setDisabledImageDescriptor(images
+				.getImageDescriptor(ISharedImages.IMG_TOOL_NEW_WIZARD_DISABLED));
+		setToolTipText(WorkbenchMessages.NewWizardAction_toolTip);
+		PlatformUI.getWorkbench().getHelpSystem()
+				.setHelp(this, IWorkbenchHelpContextIds.NEW_ACTION);
+	}
+
+	/**
+	 * Returns the id of the category of wizards to show or <code>null</code> to
+	 * show all categories.
+	 * 
+	 * @return String
+	 */
+	public String getCategoryId() {
+		return categoryId;
+	}
+
+	/**
+	 * Sets the id of the category of wizards to show or <code>null</code> to
+	 * show all categories.
+	 * 
+	 * @param id
+	 */
+	public void setCategoryId(String id) {
+		categoryId = id;
+	}
+
+	/**
+	 * <p>
+	 * Sets the title of the wizard window
+	 * <p>
+	 * 
+	 * <p>
+	 * If the title of the wizard window is <code>null</code>, the default
+	 * wizard window title will be used.
+	 * </p>
+	 * 
+	 * @param windowTitle
+	 *            The title of the wizard window, otherwise <code>null</code>
+	 *            (default wizard window title).
+	 * 
+	 * @since 3.6
+	 */
+	public void setWizardWindowTitle(String windowTitle) {
+	}
+
+	/*
+	 * (non-Javadoc) Method declared on IAction.
+	 */
+	public void run() {
+		if (workbenchWindow == null) {
+			// action has been disposed
+			return;
+		}
+		MyNewWizard wizard = new MyNewWizard();
+		wizard.setCategoryId(categoryId);
+		wizard.setWindowTitle("Select Wizard");
+
+		ISelection selection = workbenchWindow.getSelectionService()
+				.getSelection();
+		IStructuredSelection selectionToPass = StructuredSelection.EMPTY;
+		if (selection instanceof IStructuredSelection) {
+			selectionToPass = (IStructuredSelection) selection;
+		} else {
+			// @issue the following is resource-specific legacy code
+			// Build the selection from the IFile of the editor
+			Class resourceClass = LegacyResourceSupport.getResourceClass();
+			if (resourceClass != null) {
+				IWorkbenchPart part = workbenchWindow.getPartService()
+						.getActivePart();
+				if (part instanceof IEditorPart) {
+					IEditorInput input = ((IEditorPart) part).getEditorInput();
+					Object resource = Util.getAdapter(input, resourceClass);
+					if (resource != null) {
+						selectionToPass = new StructuredSelection(resource);
+					}
+				}
+			}
+		}
+
+		wizard.init(workbenchWindow.getWorkbench(), selectionToPass);
+
+		IDialogSettings workbenchSettings = WorkbenchPlugin.getDefault()
+				.getDialogSettings();
+		IDialogSettings wizardSettings = workbenchSettings
+				.getSection("NewWizardAction"); //$NON-NLS-1$
+		if (wizardSettings == null) {
+			wizardSettings = workbenchSettings.addNewSection("NewWizardAction"); //$NON-NLS-1$
+		}
+		wizard.setDialogSettings(wizardSettings);
+		wizard.setForcePreviousAndNextButtons(true);
+
+		Shell parent = workbenchWindow.getShell();
+		WizardDialog dialog = new WizardDialog(parent, wizard);
+		dialog.create();
+		dialog.getShell().setSize(
+				Math.max(SIZING_WIZARD_WIDTH, dialog.getShell().getSize().x),
+				SIZING_WIZARD_HEIGHT);
+		PlatformUI
+				.getWorkbench()
+				.getHelpSystem()
+				.setHelp(dialog.getShell(), IWorkbenchHelpContextIds.NEW_WIZARD);
+		dialog.open();
+	}
+
+	/*
+	 * (non-Javadoc) Method declared on ActionFactory.IWorkbenchAction.
+	 * 
+	 * @since 3.0
+	 */
+	public void dispose() {
+		if (workbenchWindow == null) {
+			// action has already been disposed
+			return;
+		}
+		tracker.dispose();
+		workbenchWindow = null;
+	}
+
+}
